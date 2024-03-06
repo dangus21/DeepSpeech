@@ -1,7 +1,7 @@
 console.log('starting test server');
 before(function(done) {
-	app = require('../server');
-	app.on('listening', function() {
+	const app = require('../server');
+	app.on('listening', () => {
 		console.log('listening');
 		done();
 	});

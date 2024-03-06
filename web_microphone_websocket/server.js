@@ -3,9 +3,13 @@ const socketIO = require('socket.io');
 const DeepSpeech = require('deepspeech');
 const VAD = require('node-vad');
 
+<<<<<<< Updated upstream
 let DEEPSPEECH_MODEL = __dirname + '/deepspeech-0.8.0-models'; // path to deepspeech english model directory
+=======
+const DEEPSPEECH_MODEL = `${__dirname}/deepspeech-0.9.3-models`; // path to deepspeech english model directory
+>>>>>>> Stashed changes
 
-let SILENCE_THRESHOLD = 200; // how many milliseconds of inactivity before processing the audio
+const SILENCE_THRESHOLD = 200; // how many milliseconds of inactivity before processing the audio
 
 const SERVER_PORT = 4000; // websocket server port
 
@@ -16,14 +20,14 @@ const VAD_MODE = VAD.Mode.VERY_AGGRESSIVE;
 const vad = new VAD(VAD_MODE);
 
 function createModel(modelDir) {
-	let modelPath = modelDir + '.pbmm';
-	let scorerPath = modelDir + '.scorer';
-	let model = new DeepSpeech.Model(modelPath);
+	const modelPath = `${modelDir}.pbmm`;
+	const scorerPath = `${modelDir}.scorer`;
+	const model = new DeepSpeech.Model(modelPath);
 	model.enableExternalScorer(scorerPath);
 	return model;
 }
 
-let englishModel = createModel(DEEPSPEECH_MODEL);
+const englishModel = createModel(DEEPSPEECH_MODEL);
 
 let modelStream;
 let recordedChunks = 0;
@@ -55,7 +59,7 @@ function processAudioStream(data, callback) {
 	
 	// timeout after 1s of inactivity
 	clearTimeout(endTimeout);
-	endTimeout = setTimeout(function() {
+	endTimeout = setTimeout(() => {
 		console.log('timeout');
 		resetAudioStream();
 	},1000);
@@ -63,7 +67,7 @@ function processAudioStream(data, callback) {
 
 function endAudioStream(callback) {
 	console.log('[end]');
-	let results = intermediateDecode();
+	const results = intermediateDecode();
 	if (results) {
 		if (callback) {
 			callback(results);
@@ -89,11 +93,11 @@ function processSilence(data, callback) {
 			silenceStart = new Date().getTime();
 		}
 		else {
-			let now = new Date().getTime();
+			const now = new Date().getTime();
 			if (now - silenceStart > SILENCE_THRESHOLD) {
 				silenceStart = null;
 				console.log('[end]');
-				let results = intermediateDecode();
+				const results = intermediateDecode();
 				if (results) {
 					if (callback) {
 						callback(results);
@@ -122,7 +126,8 @@ function addBufferedSilence(data) {
 	if (silenceBuffers.length) {
 		silenceBuffers.push(data);
 		let length = 0;
-		silenceBuffers.forEach(function (buf) {
+		// biome-ignore lint/complexity/noForEach: <explanation>
+		silenceBuffers.forEach((buf) => {
 			length += buf.length;
 		});
 		audioBuffer = Buffer.concat(silenceBuffers, length);
@@ -155,12 +160,12 @@ function createStream() {
 
 function finishStream() {
 	if (modelStream) {
-		let start = new Date();
-		let text = modelStream.finishStream();
+		const start = new Date();
+		const text = modelStream.finishStream();
 		if (text) {
 			console.log('');
 			console.log('Recognized Text:', text);
-			let recogTime = new Date().getTime() - start.getTime();
+			const recogTime = new Date().getTime() - start.getTime();
 			return {
 				text,
 				recogTime,
@@ -173,7 +178,7 @@ function finishStream() {
 }
 
 function intermediateDecode() {
-	let results = finishStream();
+	const results = finishStream();
 	createStream();
 	return results;
 }
@@ -183,7 +188,7 @@ function feedAudioContent(chunk) {
 	modelStream.feedAudioContent(chunk);
 }
 
-const app = http.createServer(function (req, res) {
+const app = http.createServer((req, res) => {
 	res.writeHead(200);
 	res.write('web-microphone-websocket');
 	res.end();
@@ -192,7 +197,7 @@ const app = http.createServer(function (req, res) {
 const io = socketIO(app, {});
 io.set('origins', '*:*');
 
-io.on('connection', function(socket) {
+io.on('connection', (socket) => {
 	console.log('client connected');
 	
 	socket.once('disconnect', () => {
@@ -201,19 +206,19 @@ io.on('connection', function(socket) {
 	
 	createStream();
 	
-	socket.on('stream-data', function(data) {
+	socket.on('stream-data', (data) => {
 		processAudioStream(data, (results) => {
 			socket.emit('recognize', results);
 		});
 	});
 	
-	socket.on('stream-end', function() {
+	socket.on('stream-end', () => {
 		endAudioStream((results) => {
 			socket.emit('recognize', results);
 		});
 	});
 	
-	socket.on('stream-reset', function() {
+	socket.on('stream-reset', () => {
 		resetAudioStream();
 	});
 });

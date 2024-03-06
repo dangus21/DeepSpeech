@@ -43,11 +43,11 @@ class App extends Component {
 	render() {
 		return (<div className="App">
 			<div>
-				<button disabled={!this.state.connected || this.state.recording} onClick={this.startRecording}>
+				<button type='button' disabled={!this.state.connected || this.state.recording} onClick={this.startRecording}>
 					Start Recording
 				</button>
 				
-				<button disabled={!this.state.recording} onClick={this.stopRecording}>
+				<button type='button' disabled={!this.state.recording} onClick={this.stopRecording}>
 					Stop Recording
 				</button>
 				
@@ -72,11 +72,11 @@ class App extends Component {
 	}
 	
 	createAudioProcessor(audioContext, audioSource) {
-		let processor = audioContext.createScriptProcessor(4096, 1, 1);
+		const processor = audioContext.createScriptProcessor(4096, 1, 1);
 		
 		const sampleRate = audioSource.context.sampleRate;
 		
-		let downsampler = new Worker(DOWNSAMPLING_WORKER);
+		const downsampler = new Worker(DOWNSAMPLING_WORKER);
 		downsampler.postMessage({command: "init", inputSampleRate: sampleRate});
 		downsampler.onmessage = (e) => {
 			if (this.socket.connected) {
@@ -85,7 +85,8 @@ class App extends Component {
 		};
 		
 		processor.onaudioprocess = (event) => {
-			var data = event.inputBuffer.getChannelData(0);
+			// biome-ignore lint/style/noVar: <explanation>
+			var  data = event.inputBuffer.getChannelData(0);
 			downsampler.postMessage({command: "process", inputFrame: data});
 		};
 		
@@ -99,10 +100,10 @@ class App extends Component {
 		return processor;
 	}
 	
-	startRecording = e => {
+	startRecording = () => {
 		if (!this.state.recording) {
 			this.recordingInterval = setInterval(() => {
-				let recordingTime = new Date().getTime() - this.state.recordingStart;
+				const recordingTime = new Date().getTime() - this.state.recordingStart;
 				this.setState({recordingTime});
 			}, 100);
 			
@@ -131,7 +132,7 @@ class App extends Component {
 			console.error('recording failure', e);
 		};
 		
-		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+		if (navigator.mediaDevices?.getUserMedia) {
 			navigator.mediaDevices.getUserMedia({
 				video: false,
 				audio: true
